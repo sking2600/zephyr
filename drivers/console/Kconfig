@@ -304,4 +304,10 @@ config WINSTREAM_CONSOLE_STATIC_SIZE
 
 endif # WINSTREAM_CONSOLE
 
+config SDI_CONSOLE
+	bool "Use SDI for console"
+	select CONSOLE_HAS_DRIVER
+	help
+	  Enable this option to use SDI for console output on WCH devices.
+
 endif # CONSOLE
