@@ -8,3 +8,11 @@ config PWM_WCH_GPTM
 	select PINCTRL
 	help
 	  PWM driver for the WCH GPTM, such as TIM2 on the CH32V003.
+
+config PWM_WCH_LPTIM
+	bool "WCH Low-power Timer (LPTIM) for PWM"
+	default y
+	depends on DT_HAS_WCH_CH32_LPTIM_PWM_ENABLED
+	select PINCTRL
+	help
+	  PWM driver for the WCH LPTIM.

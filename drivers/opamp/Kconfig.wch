@@ -1,0 +1,9 @@
+# WCH Op-Amp configuration options
+
+config OPAMP_WCH
+	bool "WCH Op-Amp driver"
+	default y
+	depends on DT_HAS_WCH_OPA_ENABLED
+    select MFD_WCH_OPACMP
+	help
+	  Enable Op-Amp driver for WCH.

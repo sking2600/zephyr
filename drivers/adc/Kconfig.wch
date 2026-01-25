@@ -1,0 +1,16 @@
+# WCH ADC configuration options
+
+config ADC_WCH
+	bool "WCH ADC driver"
+	default y
+	depends on DT_HAS_WCH_ADC_ENABLED
+	select PINCTRL
+	help
+	  Enable the WCH ADC driver.
+
+config ADC_WCH_DMA
+	bool "WCH ADC DMA support"
+	depends on ADC_WCH
+	select DMA
+	help
+	  Enable DMA support for the WCH ADC driver.

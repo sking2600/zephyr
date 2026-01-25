@@ -1,0 +1,8 @@
+# WCH OPACMP MFD configuration options
+
+config MFD_WCH_OPACMP
+	bool "WCH OPACMP MFD driver"
+	default y
+	depends on DT_HAS_WCH_OPACMP_ENABLED
+	help
+	  Enable MFD driver for WCH OPACMP peripheral.
