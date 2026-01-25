@@ -7,6 +7,12 @@
 
 #include <zephyr/drivers/dma.h>
 #include <zephyr/drivers/clock_control.h>
+#include <zephyr/pm/device.h>
+#include <zephyr/sys/printk.h>
+
+#define LOG_LEVEL CONFIG_DMA_LOG_LEVEL
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(dma_wch);
 
 #include <hal_ch32fun.h>
 
@@ -15,7 +21,9 @@
 
 #define DMA_WCH_AIF        (DMA_GIF1 | DMA_TCIF1 | DMA_HTIF1 | DMA_TEIF1)
 #define DMA_WCH_IF_OFF(ch) (4 * (ch))
-#define DMA_WCH_MAX_BLOCK  ((UINT32_C(2) << 16) - 1)
+/* DMA Channel Counter register is 16-bit */
+#define DMA_WCH_CNTR_MASK  0xFFFF
+#define DMA_WCH_MAX_BLOCK  DMA_WCH_CNTR_MASK
 
 struct dma_wch_chan_regs {
 	volatile uint32_t CFGR;
@@ -88,6 +96,34 @@ static int dma_wch_init(const struct device *dev)
 	config->irq_config_func(dev);
 	return 0;
 }
+
+#ifdef CONFIG_PM_DEVICE
+static int dma_wch_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	const struct dma_wch_config *config = dev->config;
+	int err;
+
+
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		err = clock_control_off(config->clock_dev, (clock_control_subsys_t)(uintptr_t)config->clock_id);
+		if (err < 0) {
+			return err;
+		}
+		break;
+	case PM_DEVICE_ACTION_RESUME:
+		err = clock_control_on(config->clock_dev, (clock_control_subsys_t)(uintptr_t)config->clock_id);
+		if (err < 0) {
+			return err;
+		}
+		break;
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+#endif
 
 /* Converts a transfer width in bytes to the corresponding bitfield */
 static uint16_t dma_wch_width_index(uint32_t bytes)
@@ -461,14 +497,17 @@ static DEVICE_API(dma, dma_wch_driver_api) = {
 	.get_attribute = dma_wch_get_attribute,
 };
 
+#define GEN_ISR(ch) \
+	if (ch <= DMA_WCH_MAX_CHAN_BASE) { \
+		dma_wch_isr(dev, ch); \
+	} else { \
+		dma_wch_isr_ext(dev, ch); \
+	}
+
 #define GENERATE_ISR(ch, _)                                                                        \
 	__used static void dma_wch_isr##ch(const struct device *dev)                               \
 	{                                                                                          \
-		if (ch <= DMA_WCH_MAX_CHAN_BASE) {                                                 \
-			dma_wch_isr(dev, ch);                                                      \
-		} else {                                                                           \
-			dma_wch_isr_ext(dev, ch);                                                  \
-		}                                                                                  \
+		GEN_ISR(ch)                                                                        \
 	}
 
 LISTIFY(DMA_WCH_MAX_CHAN, GENERATE_ISR, ())
@@ -504,7 +543,8 @@ LISTIFY(DMA_WCH_MAX_CHAN, GENERATE_ISR, ())
 		.channels = dma_wch##idx##_channels,                                               \
 	};                                                                                         \
                                                                                                    \
-	DEVICE_DT_INST_DEFINE(idx, dma_wch_init, NULL, &dma_wch##idx##_data,                       \
+	PM_DEVICE_DT_INST_DEFINE(idx, dma_wch_pm_action);                                 \
+	DEVICE_DT_INST_DEFINE(idx, dma_wch_init, PM_DEVICE_DT_INST_GET(idx), &dma_wch##idx##_data,                       \
 			      &dma_wch##idx##_config, PRE_KERNEL_1, CONFIG_DMA_INIT_PRIORITY,      \
 			      &dma_wch_driver_api);
 

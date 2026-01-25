@@ -13,24 +13,25 @@
 	model = "WCH CH32L103 Evaluation Board";
 	compatible = "wch,ch32l103-evt";
 
-	chosen {
+	aliases {
+		led0 = &led0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&gpioa 1 GPIO_ACTIVE_HIGH>;
+			label = "User LED";
+		};
+	};
+
+	soc {
 		zephyr,console = &sdi;
 		zephyr,shell-uart = &sdi;
 		zephyr,sram = &sram0;
 		zephyr,flash = &flash0;
 	};
 
-	leds {
-		compatible = "gpio-leds";
-		blue_led: led_0 {
-			gpios = <&gpioa 8 GPIO_ACTIVE_LOW>;
-			label = "PA8 LED";
-		};
-	};
-
-	aliases {
-		led0 = &blue_led;
-	};
 };
 
 &clk_hsi {
