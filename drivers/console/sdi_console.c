@@ -9,7 +9,7 @@
 #define DMDATA0_ADDR DT_REG_ADDR(DT_NODELABEL(sdi))
 #define DMDATA1_ADDR (DMDATA0_ADDR + 4)
 #else
-// Fallback to V4 default if no node found
+/* Fallback to V4 default if no node found */
 #define DMDATA0_ADDR 0xe0000380
 #define DMDATA1_ADDR 0xe0000384
 #endif
@@ -29,13 +29,17 @@ static void sdi_write_chunk(const char *buf, int len)
 {
     uint32_t timeout = SDI_TIMEOUT;
 
-    if (len > 7) len = 7;
-
-    while ((DMDATA0 & 0x80) && timeout--) {
-        // Wait for host to acknowledge previous data
+    if (len > 7) {
+        len = 7;
     }
 
-    if (timeout == 0) return;
+    while ((DMDATA0 & 0x80) && timeout--) {
+        /* Wait for host to acknowledge previous data */
+    }
+
+    if (timeout == 0) {
+        return;
+    }
 
     uint32_t d0 = (len + 4) | 0x80;
     uint32_t d1 = 0;
@@ -60,7 +64,9 @@ void sdi_console_puts(const char *str)
     int pos = 0;
     while (pos < len) {
         int chunk_len = len - pos;
-        if (chunk_len > 7) chunk_len = 7;
+        if (chunk_len > 7) {
+            chunk_len = 7;
+        }
         sdi_write_chunk(str + pos, chunk_len);
         pos += chunk_len;
     }
@@ -100,5 +106,5 @@ static int sdi_console_sys_init(void)
 
 
 
-// SYS_INIT commented out to verify boot
+/* SYS_INIT commented out to verify boot */
 SYS_INIT(sdi_console_sys_init, PRE_KERNEL_1, CONFIG_CONSOLE_INIT_PRIORITY);

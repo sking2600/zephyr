@@ -181,24 +181,24 @@ static int adc_wch_read(const struct device *dev, const struct adc_sequence *seq
 		return 0;
 	}
 
-    /* Validate that all channels in the sequence have the same gain */
-    /* Hardware has a single global PGA setting in CTLR2 */
-    for (i = 0; i < 18; i++) {
-        if ((sequence->channels & BIT(i)) != 0) {
-             if (first_channel_id == -1) {
-                 first_channel_id = i;
-                 common_pga = data->gain[i];
-             } else {
-                 if (data->gain[i] != common_pga) {
-                     LOG_ERR("All channels in sequence must have same gain");
-                     return -ENOTSUP;
-                 }
-             }
-        }
-    }
-    
-    /* Apply Gain */
-    regs->CTLR2 = (regs->CTLR2 & ~WCH_ADC_PGA_MASK) | common_pga;
+	/* Validate that all channels in the sequence have the same gain */
+	/* Hardware has a single global PGA setting in CTLR2 */
+	for (i = 0; i < 18; i++) {
+		if ((sequence->channels & BIT(i)) != 0) {
+			if (first_channel_id == -1) {
+				first_channel_id = i;
+				common_pga = data->gain[i];
+			} else {
+				if (data->gain[i] != common_pga) {
+					LOG_ERR("All channels in sequence must have same gain");
+					return -ENOTSUP;
+				}
+			}
+		}
+	}
+
+	/* Apply Gain */
+	regs->CTLR2 = (regs->CTLR2 & ~WCH_ADC_PGA_MASK) | common_pga;
 
 	if (sequence->buffer_size < total_channels * sizeof(*samples)) {
 		return -ENOMEM;
@@ -235,7 +235,7 @@ static int adc_wch_read(const struct device *dev, const struct adc_sequence *seq
 		}
 
 		regs->CTLR2 |= ADC_CTLR2_DMA;
-		
+
 		err = dma_start(config->dma_dev, config->dma_chan);
 		if (err != 0) {
 			return err;
@@ -272,7 +272,7 @@ static int adc_wch_init(const struct device *dev)
 	struct adc_wch_config *config = (struct adc_wch_config *)dev->config;
 	ADC_TypeDef *regs = config->regs;
 	int err;
-    int i;
+	int i;
 
 	clock_control_on(config->clock_dev, (clock_control_subsys_t)(uintptr_t)config->clock_id);
 
@@ -287,15 +287,19 @@ static int adc_wch_init(const struct device *dev)
 	/* Calibration */
 	regs->CTLR2 |= ADC_RSTCAL;
 	for (i = 0; i < 10000; i++) {
-        if (!(regs->CTLR2 & ADC_RSTCAL)) break;
-        k_busy_wait(1);
-    }
-	
-    regs->CTLR2 |= ADC_CAL;
+		if (!(regs->CTLR2 & ADC_RSTCAL)) {
+			break;
+		}
+		k_busy_wait(1);
+	}
+
+	regs->CTLR2 |= ADC_CAL;
 	for (i = 0; i < 10000; i++) {
-        if (!(regs->CTLR2 & ADC_CAL)) break;
-        k_busy_wait(1);
-    }
+		if (!(regs->CTLR2 & ADC_CAL)) {
+			break;
+		}
+		k_busy_wait(1);
+	}
 
 	return 0;
 }

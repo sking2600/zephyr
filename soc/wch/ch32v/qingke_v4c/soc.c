@@ -43,7 +43,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 		break;
 	case PM_STATE_STANDBY:
 		/* Enter Standby mode */
-		/* Set SLEEPDEEP bit in System Control Register (handled by arch if configured?) 
+		/* Set SLEEPDEEP bit in System Control Register (handled by arch if configured?)
 		 * For now, only WFI is safe without more complex context save/restore
 		 */
 		 __asm__ volatile("wfi");

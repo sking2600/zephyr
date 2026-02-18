@@ -32,7 +32,7 @@ struct comparator_wch_data {
 
 static int comparator_wch_get_output(const struct device *dev)
 {
-	/* The output status is not directly readable from a register in a 
+	/* The output status is not directly readable from a register in a
 	 * simple bitfield for CMP1/2/3 on CH32L103 in software without polling mode.
 	 */
 	return -ENOTSUP;
@@ -108,10 +108,10 @@ static int comparator_wch_init(const struct device *dev)
 	 * LP     [6] + idx*8
 	 */
 	uint32_t mask = (CMP_CTLR2_ALL_MASK << (cmp_idx * 8));
-	uint32_t val = CMP_CTLR2_EN_MASK | 
-	               (config->mode << 1) | 
-	               (config->nsel << 3) | 
-	               (config->psel << 4) | 
+	uint32_t val = CMP_CTLR2_EN_MASK |
+	               (config->mode << 1) |
+	               (config->nsel << 3) |
+	               (config->psel << 4) |
 	               (config->hyen << 5);
 
 	ctlr2 &= ~mask;
