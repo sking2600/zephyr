@@ -106,7 +106,7 @@ static int adc_wch_touchkey_start_read(const struct device *dev,
             /* Timeout loop */
             int timeout = 10000;
             while (!(adc->STATR & ADC_EOC) && timeout-- > 0) {
-                k_busy_wait(1);
+                k_usleep(1);
             }
             
             if (timeout <= 0) {
@@ -211,13 +211,13 @@ static int adc_wch_touchkey_init(const struct device *dev)
     
     /* Enable ADC */
     adc->CTLR2 |= ADC_ADON;
-    k_busy_wait(10); /* Power up delay */
+    k_usleep(10); /* Power up delay */
     
     /* Calibration? Usually needed for ADC, maybe for TKey too */
     adc->CTLR2 |= ADC_RSTCAL;
     int timeout = 1000;
     while((adc->CTLR2 & ADC_RSTCAL) && timeout-- > 0) {
-        k_busy_wait(10);
+        k_usleep(10);
     }
     
     if (timeout <= 0) {
@@ -228,7 +228,7 @@ static int adc_wch_touchkey_init(const struct device *dev)
     adc->CTLR2 |= ADC_CAL;
     timeout = 1000;
     while((adc->CTLR2 & ADC_CAL) && timeout-- > 0) {
-        k_busy_wait(10);
+        k_usleep(10);
     }
 
     if (timeout <= 0) {

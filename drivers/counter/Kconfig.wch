@@ -4,6 +4,6 @@
 config COUNTER_WCH_LPTIM
 	bool "WCH LPTIM counter driver"
 	default y
-	depends on DT_HAS_WCH_CH32_LPTIM_ENABLED
+	depends on DT_HAS_WCH_CH32_LPTIM_COUNTER_ENABLED
 	help
 	  Enable support for the WCH LPTIM counter driver.

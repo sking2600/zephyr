@@ -1,6 +1,6 @@
 # WCH LPTIM timer configuration options
 
-# Copyright (c) 2024 Scott King
+# Copyright (c) 2026 Scott King
 # SPDX-License-Identifier: Apache-2.0
 
 config WCH_LPTIM_TIMER
@@ -8,4 +8,51 @@ config WCH_LPTIM_TIMER
 	depends on DT_HAS_WCH_CH32_LPTIM_ENABLED
 	select TICKLESS_CAPABLE
 	help
-	  Enables the WCH LPTIM timer.
+	  Enables the WCH LPTIM timer as the system clock source.
+	  Supports tickless kernel operation and can wake the system from sleep modes.
+
+if WCH_LPTIM_TIMER
+
+config WCH_LPTIM_CLOCK_SOURCE
+	int "LPTIM clock source"
+	default 3
+	range 0 3
+	help
+	  Select the clock source for the LPTIM timer:
+	  0: PCLK1 (APB1 bus clock) - highest frequency, doesn't run in sleep
+	  1: HSI (8MHz internal oscillator) - medium power, fast wakeup
+	  2: LSE (32.768kHz external crystal) - very low power, high accuracy
+	  3: LSI (40kHz internal oscillator) - low power, medium accuracy, default
+
+config WCH_LPTIM_PRESCALER
+	int "LPTIM clock prescaler"
+	default 1
+	range 1 128
+	help
+	  Clock prescaler for the LPTIM timer. Valid values are 1, 2, 4, 8, 16, 32, 64, 128.
+	  The effective timer clock is the source clock divided by this value.
+	  Note: Only powers of 2 are valid. Other values will cause unpredictable behavior.
+
+config WCH_LPTIM_TIMEOUT
+	int "LPTIM timeout in seconds"
+	default 1
+	range 1 210
+	help
+	  Maximum timeout duration in seconds for the LPTIM timer.
+	  With LSI (40kHz) and prescaler 1, max is ~1.6 seconds (0xFFFF/40000).
+	  With prescaler 128, max is ~209 seconds.
+
+config WCH_LPTIM_GUARD_VALUE
+	int "LPTIM guard value (minimum cycles before ARR update)"
+	default 5
+	range 2 20
+	help
+	  Minimum number of timer cycles that must remain before the next
+	  autoreload match before a new ARR value can be safely written.
+	  A higher value reduces the risk of race conditions when updating
+	  the autoreload register close to the match point, at the cost of
+	  slightly reduced timeout precision. The default of 5 provides a
+	  safe margin for most clock configurations. Increase this value
+	  if you observe missed or spurious timer events.
+
+endif # WCH_LPTIM_TIMER

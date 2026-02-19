@@ -10,6 +10,7 @@
 #include <zephyr/drivers/interrupt_controller/wch_exti.h>
 #include <zephyr/dt-bindings/gpio/gpio.h>
 #include <zephyr/irq.h>
+#include <zephyr/pm/device.h>
 
 #include <hal_ch32fun.h>
 
@@ -255,10 +256,44 @@ static int gpio_ch32v00x_init(const struct device *dev)
 {
 	const struct gpio_ch32v00x_config *config = dev->config;
 
-	clock_control_on(config->clock_dev, (clock_control_subsys_t *)(uintptr_t)config->clock_id);
+	clock_control_on(config->clock_dev, (clock_control_subsys_t)(uintptr_t)config->clock_id);
 
 	return 0;
 }
+
+#ifdef CONFIG_PM_DEVICE
+static int gpio_ch32v00x_pm_action(const struct device *dev,
+				   enum pm_device_action action)
+{
+	const struct gpio_ch32v00x_config *config = dev->config;
+	int err = 0;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		err = clock_control_off(config->clock_dev,
+				(clock_control_subsys_t)(uintptr_t)config->clock_id);
+		if (err < 0) {
+			LOG_ERR("Failed to disable GPIO clock: %d", err);
+			return err;
+		}
+		break;
+	case PM_DEVICE_ACTION_RESUME:
+		err = clock_control_on(config->clock_dev,
+				(clock_control_subsys_t)(uintptr_t)config->clock_id);
+		if (err < 0) {
+			LOG_ERR("Failed to enable GPIO clock: %d", err);
+			return err;
+		}
+		break;
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+PM_DEVICE_DEFINE(gpio_ch32v00x_pm, gpio_ch32v00x_pm_action);
+#endif /* CONFIG_PM_DEVICE */
 
 #define GPIO_CH32V00X_INIT(idx)                                                                    \
 	static const struct gpio_ch32v00x_config gpio_ch32v00x_##idx##_config = {                  \
@@ -273,8 +308,8 @@ static int gpio_ch32v00x_init(const struct device *dev)
                                                                                                    \
 	static struct gpio_ch32v00x_data gpio_ch32v00x_##idx##_data;                               \
                                                                                                    \
-	DEVICE_DT_INST_DEFINE(idx, gpio_ch32v00x_init, NULL, &gpio_ch32v00x_##idx##_data,          \
-			      &gpio_ch32v00x_##idx##_config, PRE_KERNEL_1,                         \
+	DEVICE_DT_INST_DEFINE(idx, gpio_ch32v00x_init, PM_DEVICE_DT_GET(idx),                          \
+			      &gpio_ch32v00x_##idx##_data, &gpio_ch32v00x_##idx##_config, PRE_KERNEL_1,         \
 			      CONFIG_GPIO_INIT_PRIORITY, &gpio_ch32v00x_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(GPIO_CH32V00X_INIT)

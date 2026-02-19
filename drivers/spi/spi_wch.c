@@ -16,6 +16,7 @@ LOG_MODULE_REGISTER(spi_wch);
 #include <zephyr/drivers/spi/rtio.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/clock_control.h>
+#include <zephyr/pm/device.h>
 
 #include <hal_ch32fun.h>
 
@@ -226,6 +227,43 @@ static int spi_wch_init(const struct device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int spi_wch_pm_action(const struct device *dev,
+				   enum pm_device_action action)
+{
+	const struct spi_wch_config *config = dev->config;
+	SPI_TypeDef *regs = config->regs;
+	clock_control_subsys_t clk_sys = (clock_control_subsys_t)(uintptr_t)config->clock_id;
+	int err = 0;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		/* Disable SPI and turn off clock */
+		regs->CTLR1 &= ~SPI_CTLR1_SPE;
+		err = clock_control_off(config->clk_dev, clk_sys);
+		if (err < 0) {
+			return err;
+		}
+		break;
+	case PM_DEVICE_ACTION_RESUME:
+		/* Enable clock and reconfigure SPI */
+		err = clock_control_on(config->clk_dev, clk_sys);
+		if (err < 0) {
+			return err;
+		}
+		/* Re-enable SPI - configuration is preserved */
+		regs->CTLR1 |= SPI_CTLR1_SPE;
+		break;
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+PM_DEVICE_DEFINE(spi_wch_pm, spi_wch_pm_action);
+#endif /* CONFIG_PM_DEVICE */
+
 static DEVICE_API(spi, spi_wch_driver_api) = {
 	.transceive = spi_wch_transceive_sync,
 #ifdef CONFIG_SPI_RTIO
@@ -245,7 +283,7 @@ static DEVICE_API(spi, spi_wch_driver_api) = {
 		SPI_CONTEXT_INIT_LOCK(spi_wch_dev_data_##n, ctx),                                  \
 		SPI_CONTEXT_INIT_SYNC(spi_wch_dev_data_##n, ctx),                                  \
 		SPI_CONTEXT_CS_GPIOS_INITIALIZE(DT_DRV_INST(n), ctx)};                             \
-	SPI_DEVICE_DT_INST_DEFINE(n, spi_wch_init, NULL, &spi_wch_dev_data_##n,                    \
+	SPI_DEVICE_DT_INST_DEFINE(n, spi_wch_init, PM_DEVICE_DT_GET(n), &spi_wch_dev_data_##n,                    \
 				  &spi_wch_config_##n, POST_KERNEL, CONFIG_SPI_INIT_PRIORITY,      \
 				  &spi_wch_driver_api);
 

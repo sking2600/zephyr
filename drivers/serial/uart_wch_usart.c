@@ -11,6 +11,7 @@
 #include <zephyr/drivers/clock_control.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/irq.h>
+#include <zephyr/pm/device.h>
 
 #include <hal_ch32fun.h>
 
@@ -78,6 +79,43 @@ static int usart_wch_init(const struct device *dev)
 
 	return 0;
 }
+
+#ifdef CONFIG_PM_DEVICE
+static int usart_wch_pm_action(const struct device *dev,
+				   enum pm_device_action action)
+{
+	const struct usart_wch_config *config = dev->config;
+	USART_TypeDef *regs = config->regs;
+	clock_control_subsys_t clock_sys = (clock_control_subsys_t *)(uintptr_t)config->clock_id;
+	int err = 0;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		/* Disable USART and turn off clock */
+		regs->CTLR1 &= ~USART_CTLR1_UE;
+		err = clock_control_off(config->clock_dev, clock_sys);
+		if (err < 0) {
+			return err;
+		}
+		break;
+	case PM_DEVICE_ACTION_RESUME:
+		/* Enable clock and reconfigure USART */
+		err = clock_control_on(config->clock_dev, clock_sys);
+		if (err < 0) {
+			return err;
+		}
+		/* Re-enable USART - configuration is preserved */
+		regs->CTLR1 |= USART_CTLR1_UE;
+		break;
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+PM_DEVICE_DEFINE(usart_wch_pm, usart_wch_pm_action);
+#endif /* CONFIG_PM_DEVICE */
 
 static int usart_wch_poll_in(const struct device *dev, unsigned char *ch)
 {
@@ -334,8 +372,8 @@ static DEVICE_API(uart, usart_wch_driver_api) = {
 		.clock_id = DT_INST_CLOCKS_CELL(idx, id),                                          \
 		.pin_cfg = PINCTRL_DT_INST_DEV_CONFIG_GET(idx),                                    \
 		USART_WCH_IRQ_HANDLER_FUNC(idx)};                                                  \
-	DEVICE_DT_INST_DEFINE(idx, &usart_wch_init, NULL, &usart_wch_##idx##_data,                 \
-			      &usart_wch_##idx##_config, PRE_KERNEL_1,                             \
+	DEVICE_DT_INST_DEFINE(idx, &usart_wch_init, PM_DEVICE_DT_GET(idx),                          \
+			      &usart_wch_##idx##_data, &usart_wch_##idx##_config, PRE_KERNEL_1,         \
 			      CONFIG_SERIAL_INIT_PRIORITY, &usart_wch_driver_api);                 \
 	USART_WCH_IRQ_HANDLER(idx)
 

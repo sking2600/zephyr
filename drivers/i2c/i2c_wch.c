@@ -16,6 +16,7 @@ LOG_MODULE_REGISTER(i2c_wch);
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/device.h>
+#include <zephyr/pm/device.h>
 
 #include "i2c-priv.h"
 
@@ -398,6 +399,43 @@ static int i2c_wch_init(const struct device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int i2c_wch_pm_action(const struct device *dev,
+				   enum pm_device_action action)
+{
+	const struct i2c_wch_config *config = dev->config;
+	I2C_TypeDef *regs = config->regs;
+	clock_control_subsys_t clk_sys = (clock_control_subsys_t)(uintptr_t)config->clk_id;
+	int err = 0;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		/* Disable I2C and turn off clock */
+		regs->CTLR1 &= ~I2C_CTLR1_PE;
+		err = clock_control_off(config->clk_dev, clk_sys);
+		if (err < 0) {
+			return err;
+		}
+		break;
+	case PM_DEVICE_ACTION_RESUME:
+		/* Enable clock and reconfigure I2C */
+		err = clock_control_on(config->clk_dev, clk_sys);
+		if (err < 0) {
+			return err;
+		}
+		/* Re-enable I2C - configuration is preserved */
+		regs->CTLR1 |= I2C_CTLR1_PE;
+		break;
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+PM_DEVICE_DEFINE(i2c_wch_pm, i2c_wch_pm_action);
+#endif /* CONFIG_PM_DEVICE */
+
 static DEVICE_API(i2c, i2c_wch_api) = {
 	.configure = i2c_wch_configure,
 	.transfer = i2c_wch_transfer,
@@ -422,7 +460,7 @@ static DEVICE_API(i2c, i2c_wch_api) = {
 											\
 	static struct i2c_wch_data i2c_wch_data_##inst;					\
 											\
-	I2C_DEVICE_DT_INST_DEFINE(inst, i2c_wch_init, NULL, &i2c_wch_data_##inst,	\
+	I2C_DEVICE_DT_INST_DEFINE(inst, i2c_wch_init, PM_DEVICE_DT_GET(inst), &i2c_wch_data_##inst,	\
 				 &i2c_wch_cfg_##inst, PRE_KERNEL_1,			\
 				 CONFIG_I2C_INIT_PRIORITY, &i2c_wch_api);		\
 											\
