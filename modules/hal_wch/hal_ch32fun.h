@@ -28,9 +28,13 @@
 #endif /* defined(CONFIG_SOC_SERIES_QINGKE_V4B) */
 
 #if defined(CONFIG_SOC_SERIES_QINGKE_V4C)
+#if defined(CONFIG_SOC_CH32L103)
+#define CH32L103 1
+#elif defined(CONFIG_SOC_CH32V208)
 #define CH32V20x 1
-#if defined(CONFIG_SOC_CH32V208)
 #define CH32V20x_D8W 1
+#else
+#error "Unsupported CH32V4C variant. Please define SOC_CH32L103 or SOC_CH32V208."
 #endif
 #include <ch32fun.h>
 #endif /* defined(CONFIG_SOC_SERIES_QINGKE_V4C) */

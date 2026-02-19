@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Scott King
+ * Copyright (c) 2026 Scott King
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -73,14 +73,6 @@ static int pwm_lptim_set_cycles(const struct device *dev, uint32_t channel,
 	 * Continuous mode will be set in CR via CNTSTRT
 	 * TIMOUT disabled as per example
 	 */
-	/* Configure for PWM mode
-	 * WAVE (bit 20): PWM mode
-	 * PRELOAD (bit 22): Enable preload for glitch-free updates
-	 * Internal clock source (bits 25-26): 00 = PCLK1
-	 * Prescaler: /128 (bits 9-11): 111 = /128
-	 * Continuous mode will be set in CR via CNTSTRT
-	 * TIMOUT disabled as per example
-	 */
 	config->regs->CFGR = LPTIM_CFGR_WAVE | LPTIM_CFGR_PRELOAD | LPTIM_CFGR_PSC_128;
 
 	/* Apply polarity */
@@ -97,8 +89,8 @@ static int pwm_lptim_set_cycles(const struct device *dev, uint32_t channel,
 	/* Wait for ARROK */
 	uint32_t timeout = 1000;
 	while (!(config->regs->ISR & LPTIM_ISR_ARROK) && timeout--) {
-        k_busy_wait(1);
-    }
+		/* Wait for sync flag */
+	}
 	config->regs->ICR |= LPTIM_ICR_ARROKCF;
 
 	/* Set pulse width (CMP) */
@@ -107,11 +99,10 @@ static int pwm_lptim_set_cycles(const struct device *dev, uint32_t channel,
 	/* Wait for CMPOK */
 	timeout = 1000;
 	while (!(config->regs->ISR & LPTIM_ISR_CMPOK) && timeout--) {
-        k_busy_wait(1);
-    }
+		/* Wait for sync flag */
+	}
 	config->regs->ICR |= LPTIM_ICR_CMPOKCF;
 
-	/* Enable PWM output and start continuous mode */
 	/* Enable PWM output and start continuous mode */
 	config->regs->CR |= LPTIM_CR_OUTEN | LPTIM_CR_CNTSTRT;
 
