@@ -1,0 +1,55 @@
+# Copyright (c) 2026 Scott King
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  WCH CH32 Low-Power Timer (LPTIM) used as system tick timer or counter.
+  Supports tickless kernel operation and can wake the system from sleep modes.
+
+compatible: "wch,ch32-lptim"
+
+include: [base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  clock-names:
+    type: string-array
+    required: true
+    description: |
+      Names of clocks. Should contain "lptim" for the timer bus clock
+      and optionally a kernel clock.
+
+  wch_clock_source:
+    type: int
+    default: 3
+    description: |
+      LPTIM clock source selection:
+      0: PCLK1 (APB1 bus clock)
+      1: HSI (8MHz internal oscillator)
+      2: LSE (32.768kHz external crystal)
+      3: LSI (40kHz internal oscillator, default)
+
+  wch_prescaler:
+    type: int
+    default: 1
+    description: |
+      Clock prescaler. Valid values are 1, 2, 4, 8, 16, 32, 64, 128.
+      The effective timer clock is the source clock divided by this value.
+
+  wch_timeout:
+    type: int
+    default: 1
+    description: |
+      Maximum timeout in seconds. Used to calculate the LPTIM time base.
+      With LSI (40kHz) and prescaler 1, max is ~1.6 seconds (0xFFFF/40000).
+      With prescaler 128, max is ~209 seconds.
+
+  status:
+    type: string
+    default: "disabled"
+    description: |
+      Status of the LPTIM device. Set to "okay" to enable.
