@@ -14,3 +14,11 @@ config ADC_WCH_DMA
 	select DMA
 	help
 	  Enable DMA support for the WCH ADC driver.
+
+config ADC_WCH_TOUCHKEY
+	bool "WCH CH32 Touchkey driver"
+	default y
+	depends on DT_HAS_WCH_CH32_TOUCHKEY_ENABLED
+	select ADC_CONTEXT_NET_PKT_BUFFER
+	help
+	  Enable WCH CH32 Touchkey driver.
