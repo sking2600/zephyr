@@ -25,9 +25,9 @@
 		};
 	};
 
-	soc {
-		zephyr,console = &sdi;
-		zephyr,shell-uart = &sdi;
+	chosen {
+		zephyr,console = &usart1;
+		zephyr,shell-uart = &usart1;
 		zephyr,sram = &sram0;
 		zephyr,flash = &flash0;
 	};
