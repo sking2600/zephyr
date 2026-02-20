@@ -14,11 +14,7 @@
 #define CH32L103_PINMUX_PORT_PC 2
 #define CH32L103_PINMUX_PORT_PD 3
 
-/*
- * Defines the starting bit for the remap field.
- * Note: ch32l103 has different AFIO_PCFR2 register layout compared to ch32v20x_30x family.
- * This bindings file only includes peripherals available on ch32l103.
- */
+
 #define CH32L103_PINMUX_ADC1_RM    0 /* No remap for ADC */
 #define CH32L103_PINMUX_SPI1_RM    0
 #define CH32L103_PINMUX_I2C1_RM    1
