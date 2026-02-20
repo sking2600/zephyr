@@ -9,7 +9,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/clock_control.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/drivers/mfd/wch_opacmp.h>
+#include <hal_ch32fun.h>
 
 LOG_MODULE_REGISTER(mfd_wch_opacmp, CONFIG_MFD_LOG_LEVEL);
 

@@ -7,9 +7,9 @@
 #define DT_DRV_COMPAT wch_opa
 
 #include <zephyr/drivers/opamp.h>
-#include <zephyr/drivers/mfd/wch_opacmp.h>
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
+#include <hal_ch32fun.h>
 
 LOG_MODULE_REGISTER(opamp_wch, CONFIG_OPAMP_LOG_LEVEL);
 

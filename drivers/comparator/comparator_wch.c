@@ -7,7 +7,6 @@
 #define DT_DRV_COMPAT wch_cmp
 
 #include <zephyr/drivers/comparator.h>
-#include <zephyr/drivers/mfd/wch_opacmp.h>
 #include <zephyr/device.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>

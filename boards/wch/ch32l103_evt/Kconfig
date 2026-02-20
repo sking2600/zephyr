@@ -3,4 +3,4 @@
 
 config BOARD_CH32L103_EVT
 	bool "WCH CH32L103 Evaluation Board"
-	depends on SOC_CH32L103
+	select SOC_CH32L103

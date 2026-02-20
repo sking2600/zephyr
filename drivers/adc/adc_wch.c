@@ -19,44 +19,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(adc_wch);
 
-/* Standard WCH ADC bits */
-#ifndef ADC_ADON
-#define ADC_ADON                BIT(0)
-#endif
-
-#ifndef ADC_TSVREFE
-#define ADC_TSVREFE             BIT(23)
-#endif
-
-#ifndef ADC_RSWSTART
-#define ADC_RSWSTART            BIT(22)
-#endif
-
-#ifndef ADC_CTLR1_SCAN
-#define ADC_CTLR1_SCAN          BIT(8)
-#endif
-
-#ifndef ADC_CTLR2_DMA
-#define ADC_CTLR2_DMA           BIT(8)
-#endif
-
-#ifndef ADC_RSTCAL
-#define ADC_RSTCAL              BIT(3)
-#endif
-
-#ifndef ADC_CAL
-#define ADC_CAL                 BIT(2)
-#endif
-
-#ifndef ADC_L_0
-#define ADC_L_0                 BIT(20)
-#endif
-
-#define WCH_ADC_PGA_1X 0
-#define WCH_ADC_PGA_4X BIT(27)
-#define WCH_ADC_PGA_16X BIT(28)
-#define WCH_ADC_PGA_64X (BIT(27) | BIT(28))
-#define WCH_ADC_PGA_MASK (BIT(27) | BIT(28))
+/* Standard WCH ADC bits - now defined in hal_wch */
 
 struct adc_wch_config {
 	ADC_TypeDef *regs;

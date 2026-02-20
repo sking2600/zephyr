@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/dt-bindings/pinctrl/ch32v20x_30x-pinctrl.h>
+#include <zephyr/dt-bindings/pinctrl/ch32l103-pinctrl.h>
 
 &pinctrl {
 	usart1_default: usart1_default {
