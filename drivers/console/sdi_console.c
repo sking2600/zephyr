@@ -19,7 +19,7 @@
 
 #define SDI_TIMEOUT 0x80000
 
-void sdi_console_init(void)
+static void sdi_console_init(void)
 {
     DMDATA1 = 0x00;
     DMDATA0 = 0x80;
@@ -58,7 +58,7 @@ static void sdi_write_chunk(const char *buf, int len)
     DMDATA0 = d0;
 }
 
-void sdi_console_puts(const char *str)
+static void sdi_console_puts(const char *str)
 {
     int len = strlen(str);
     int pos = 0;
@@ -76,7 +76,9 @@ void sdi_console_puts(const char *str)
 #include <zephyr/sys/printk-hooks.h>
 #include <zephyr/sys/libc-hooks.h>
 
-void sdi_console_printf(const char *format, ...)
+#include <zephyr/toolchain.h>
+
+static void __maybe_unused sdi_console_printf(const char *format, ...)
 {
     char buf[128];
     va_list args;
