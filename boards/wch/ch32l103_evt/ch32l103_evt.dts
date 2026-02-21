@@ -1,0 +1,55 @@
+/*
+ * Copyright (c) 2026 Scott King
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <wch/ch32l103/ch32l103.dtsi>
+#include "ch32l103_evt-pinctrl.dtsi"
+
+/ {
+	model = "WCH CH32L103 Evaluation Board";
+	compatible = "wch,ch32l103-evt";
+
+	aliases {
+		led0 = &led0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led0: led_0 {
+			gpios = <&gpioa 1 GPIO_ACTIVE_HIGH>;
+			label = "User LED";
+		};
+	};
+
+	chosen {
+		zephyr,console = &usart1;
+		zephyr,shell-uart = &usart1;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+	};
+};
+
+&clk_hse {
+	status = "okay";
+};
+
+&usart1 {
+	status = "okay";
+	pinctrl-0 = <&usart1_default>;
+	pinctrl-names = "default";
+};
+
+&pll {
+	status = "okay";
+	clocks = <&clk_hse>;
+	mul = <12>;
+};
+
+&cpu0 {
+	clock-frequency = <DT_FREQ_M(96)>;
+};

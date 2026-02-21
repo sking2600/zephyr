@@ -313,4 +313,16 @@ config WINSTREAM_CONSOLE_STATIC_SIZE
 
 endif # WINSTREAM_CONSOLE
 
+config SDI_WCH
+	bool "Use WCH SDI for console"
+	select CONSOLE_HAS_DRIVER
+	help
+	  Enable this option to use WCH Serial Debug Interface (SDI) for
+	  console output on WCH RISC-V devices. This uses the DMDATA debug
+	  registers to communicate with the WCH-Link debugger.
+
+module = SDI_WCH
+module-str = WCH SDI console
+source "subsys/logging/Kconfig.template.log_config"
+
 endif # CONSOLE

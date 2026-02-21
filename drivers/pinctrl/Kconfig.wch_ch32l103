@@ -1,0 +1,9 @@
+# Copyright (c) 2026 Scott King
+# SPDX-License-Identifier: Apache-2.0
+
+config PINCTRL_WCH_CH32L103
+	bool "WCH CH32L103 AFIO pin controller driver"
+	default y
+	depends on DT_HAS_WCH_CH32L103_AFIO_ENABLED
+	help
+	  Enable the WCH CH32L103 AFIO pin controller driver.
