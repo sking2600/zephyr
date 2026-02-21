@@ -17,6 +17,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/init.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/printk.h>
 #include <zephyr/sys/printk-hooks.h>
 #include <zephyr/sys/libc-hooks.h>
 
@@ -110,27 +111,6 @@ void sdi_wch_puts(const char *str)
 			break;
 		}
 		pos += chunk_len;
-	}
-}
-
-#define SDI_PRINTF_BUF_SIZE 128
-
-__printf_like(1, 2) void sdi_wch_printf(const char *format, ...)
-{
-	char buf[SDI_PRINTF_BUF_SIZE];
-	va_list args;
-	int len;
-
-	va_start(args, format);
-	len = vsnprintf(buf, sizeof(buf), format, args);
-	va_end(args);
-
-	if (len > 0) {
-		if (len >= SDI_PRINTF_BUF_SIZE) {
-			LOG_WRN("SDI console output truncated (got %d, max %d)", len,
-				SDI_PRINTF_BUF_SIZE - 1);
-		}
-		sdi_wch_puts(buf);
 	}
 }
 
