@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Scott King
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_CH32L103
+
+config NUM_IRQS
+	default 82
+
+config VECTOR_TABLE_SIZE
+	default 82
+
+endif # SOC_CH32L103
