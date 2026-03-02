@@ -50,6 +50,10 @@
 	mul = <12>;
 };
 
+&rcc {
+	clocks = <&pll>;
+};
+
 &cpu0 {
 	clock-frequency = <DT_FREQ_M(96)>;
 };
