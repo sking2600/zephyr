@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 MASSDRIVER EI (massdriver.space)
+ * Copyright (c) 2026 Scott King
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -40,36 +40,25 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 /* SystemCoreClock is typically defined in the HAL/ch32fun library */
 extern uint32_t SystemCoreClock;
 
-/* Inline PWR register access */
-static inline volatile uint32_t *get_pwr_ctlr(void)
-{
-	return (volatile uint32_t *)(PWR_BASE_ADDR + 0x00);
-}
+/* PWR register definitions are defined in HAL ch32l103hw.h
+ * PWR_TypeDef *PWR provides register access via PWR->CTLR and PWR->CSR
+ * Bit definitions like PWR_CTLR_CWUF, PWR_CTLR_CSBF, PWR_CTLR_PDDS are in HAL
+ */
 
-static inline volatile uint32_t *get_pwr_csr(void)
-{
-	return (volatile uint32_t *)(PWR_BASE_ADDR + 0x04);
-}
-
-#define PWR_CTLR (*get_pwr_ctlr())
-#define PWR_CSR  (*get_pwr_csr())
-
-/* Use RCC from HAL - already defined in ch32l103hw.h */
-
-/* Flash low power mode bits in PWR_CTLR */
+/* Flash low power mode bit position and mask - CH32L103 specific */
 #define PWR_CTLR_FLASH_LP_Pos 9
 #define PWR_CTLR_FLASH_LP_Msk (0x7U << PWR_CTLR_FLASH_LP_Pos)
 
 static inline void flash_enter_low_power(void)
 {
 	/* Set flash low power mode bits (111b at bits 9-11) */
-	PWR_CTLR |= PWR_CTLR_FLASH_LP_Msk;
+	PWR->CTLR |= PWR_CTLR_FLASH_LP_Msk;
 }
 
 static inline void flash_exit_low_power(void)
 {
 	/* Clear flash low power mode bit 9 (keep bits 10-11 as needed) */
-	PWR_CTLR &= ~(1U << PWR_CTLR_FLASH_LP_Pos);
+	PWR->CTLR &= ~(1U << PWR_CTLR_FLASH_LP_Pos);
 }
 
 static inline int rcc_enable_pwr_clock(void)
@@ -108,7 +97,7 @@ static void enter_stop_mode(uint32_t regulator)
 	/* Enter flash low power mode for additional power savings */
 	flash_enter_low_power();
 
-	tmpreg = PWR_CTLR;
+	tmpreg = PWR->CTLR;
 	/* Clear DS bits, set low power mode if requested */
 	tmpreg &= ~0x03; /* Clear LPDS and PDDS */
 	tmpreg |= regulator;
@@ -118,10 +107,10 @@ static void enter_stop_mode(uint32_t regulator)
 		tmpreg &= ~(3 << 10);
 		tmpreg |= (1 << 11); /* LDO in low power mode */
 	}
-	PWR_CTLR = tmpreg;
+	PWR->CTLR = tmpreg;
 
 	/* Clear wakeup flags */
-	PWR_CTLR |= PWR_CTLR_CWUF;
+	PWR->CTLR |= PWR_CTLR_CWUF;
 
 	/* Disable interrupts briefly for WFI */
 	__asm__ volatile("csrci mstatus, 0x8");
@@ -146,7 +135,7 @@ static void enter_standby_mode(void)
 
 	rcc_enable_pwr_clock();
 
-	tmpreg = PWR_CTLR;
+	tmpreg = PWR->CTLR;
 
 	/* Configure flash low power mode */
 	tmpreg &= ~(3 << 10);
@@ -159,7 +148,7 @@ static void enter_standby_mode(void)
 	/* Set Power Down Deepsleep */
 	tmpreg |= PWR_CTLR_PDDS;
 
-	PWR_CTLR = tmpreg;
+	PWR->CTLR = tmpreg;
 
 	/* Disable interrupts for WFI */
 	__asm__ volatile("csrci mstatus, 0x8");
@@ -180,7 +169,7 @@ static void enter_standby_mode_ram(void)
 
 	rcc_enable_pwr_clock();
 
-	tmpreg = PWR_CTLR;
+	tmpreg = PWR->CTLR;
 
 	/* Configure flash low power mode */
 	tmpreg &= ~(3 << 10);
@@ -196,7 +185,7 @@ static void enter_standby_mode_ram(void)
 	/* Enable 2K + 18K RAM retention (bits 16, 17) */
 	tmpreg |= (BIT(16) | BIT(17));
 
-	PWR_CTLR = tmpreg;
+	PWR->CTLR = tmpreg;
 
 	/* Disable interrupts for WFI */
 	__asm__ volatile("csrci mstatus, 0x8");
@@ -214,17 +203,17 @@ static void enter_standby_mode_ram(void)
 static bool is_wakeup_from_standby(void)
 {
 	rcc_enable_pwr_clock();
-	return (PWR_CSR & PWR_CSR_SBF) != 0;
+	return (PWR->CSR & PWR_CSR_SBF) != 0;
 }
 
 /*
  * Clear standby/wakeup flags
- * Note: Bits 2 (CWUF) and 3 (CSBF) in PWR_CTLR are write-1-to-clear
+ * Note: PWR_CTLR_CWUF (bit 2) and PWR_CTLR_CSBF (bit 3) are write-1-to-clear
  */
 static void clear_pwr_flags(void)
 {
-	PWR_CTLR |= PWR_CTLR_CWUF; /* Clear wakeup flag */
-	PWR_CTLR |= PWR_CTLR_CSBF; /* Clear standby flag */
+	PWR->CTLR |= PWR_CTLR_CWUF; /* Clear wakeup flag */
+	PWR->CTLR |= PWR_CTLR_CSBF; /* Clear standby flag */
 }
 
 /*

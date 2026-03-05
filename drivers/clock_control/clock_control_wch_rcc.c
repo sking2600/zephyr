@@ -47,9 +47,9 @@ LOG_MODULE_REGISTER(clock_control_wch, CONFIG_CLOCK_CONTROL_LOG_LEVEL);
  */
 static const uint8_t pllmul_lut[] = {18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 15, 16};
 #elif defined(CONFIG_SOC_CH32L103)
-/* CH32L103 has a wider linear range up to x32 using 5 bits */
-static const uint8_t pllmul_lut[] = {2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
-				     18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32};
+/* CH32L103 uses standard 4-bit PLL multiplier encoding (same as other CH32V) */
+/* Per EXAM code: pllmull = (pllmull >> 18) + 2, with special case 15->18 */
+static const uint8_t pllmul_lut[] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18};
 #else
 static const uint8_t pllmul_lut[] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18};
 #endif
@@ -236,15 +236,8 @@ static int clock_control_wch_rcc_init(const struct device *dev)
 		return -EINVAL;
 	}
 
-	/* L103 uses bit 22 as the 5th bit of the multiplier */
-	if (IS_ENABLED(CONFIG_SOC_CH32L103)) {
-		RCC->CFGR0 &= ~(RCC_PLLMULL | BIT(22));
-		RCC->CFGR0 |= (pllmul & 0xF) << 18;
-		RCC->CFGR0 |= (pllmul & 0x10) << (22 - 4);
-	} else {
-		RCC->CFGR0 &= ~RCC_PLLMULL;
-		RCC->CFGR0 |= WCH_RCC_PLLMUL_VAL(pllmul);
-	}
+	RCC->CFGR0 &= ~RCC_PLLMULL;
+	RCC->CFGR0 |= WCH_RCC_PLLMUL_VAL(pllmul);
 #endif
 	RCC->CTLR |= RCC_PLLON;
 	timeout = WCH_RCC_OSC_TIMEOUT;
